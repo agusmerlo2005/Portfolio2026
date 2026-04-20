@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --foreground: #ededed;
+    --background: #0a0a0a;
+    /* Esto es lo que activa la magia */
+    scroll-behavior: smooth;
+  }
+
+  html, body {
+    @apply bg-[#0a0a0a] text-[#ededed];
+    margin: 0;
+    padding: 0;
+  }
+
+  /* MUY IMPORTANTE:
+     Esto evita que el Navbar tape el título de la sección al llegar.
+  */
+  section[id] {
+    scroll-margin-top: 80px;
+  }
+}
