@@ -1,23 +1,183 @@
 @import "tailwindcss";
 
+@theme {
+  /* Paleta base — fondo casi negro con matiz frío, no negro puro */
+  --color-bg: #08080b;
+  --color-bg-elevated: #0e0e12;
+  --color-surface: #14141a;
+  --color-surface-2: #1c1c24;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-strong: rgba(255, 255, 255, 0.12);
+
+  --color-fg: #f4f4f5;
+  --color-fg-muted: #a1a1aa;
+  --color-fg-subtle: #71717a;
+  --color-fg-faint: #52525b;
+
+  /* Acento — violeta eléctrico, no el indigo genérico */
+  --color-accent: #7c5cff;
+  --color-accent-hi: #a78bfa;
+  --color-accent-lo: #4c1d95;
+  --color-accent-glow: rgba(124, 92, 255, 0.35);
+
+  /* Acentos secundarios para tags y estados */
+  --color-lime: #d4ff4f;
+  --color-emerald: #34d399;
+  --color-amber: #fbbf24;
+
+  /* Tipografía */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* Easings */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+
+  /* Animaciones */
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-marquee-reverse: marquee-reverse 40s linear infinite;
+  --animate-aurora: aurora 18s ease-in-out infinite alternate;
+  --animate-pulse-dot: pulse-dot 2.4s ease-in-out infinite;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
 @layer base {
   :root {
-    --foreground: #ededed;
-    --background: #0a0a0a;
-    /* Esto es lo que activa la magia */
+    color-scheme: dark;
     scroll-behavior: smooth;
   }
 
   html, body {
-    @apply bg-[#0a0a0a] text-[#ededed];
+    background-color: var(--color-bg);
+    color: var(--color-fg);
     margin: 0;
     padding: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
   }
 
-  /* MUY IMPORTANTE:
-     Esto evita que el Navbar tape el título de la sección al llegar.
-  */
+  /* Selección con color de marca */
+  ::selection {
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  /* Scrollbar finita */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  /* Evita que el navbar tape el título al hacer anchor scroll */
   section[id] {
-    scroll-margin-top: 80px;
+    scroll-margin-top: 96px;
+  }
+
+  /* Focus visible accesible */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  /* Grid de fondo sutil tipo "graph paper" */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  /* Máscara radial para fade del grid hacia los bordes */
+  .mask-radial {
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 80%);
+  }
+
+  .mask-fade-x {
+    mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  }
+
+  /* Ruido finísimo para sacarle el aspecto plano al fondo */
+  .bg-noise {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.4 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+    background-size: 160px 160px;
+  }
+
+  /* Texto con gradiente */
+  .text-gradient {
+    background: linear-gradient(180deg, #ffffff 0%, #ffffff 40%, rgba(255, 255, 255, 0.45) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-accent-gradient {
+    background: linear-gradient(135deg, var(--color-accent-hi) 0%, var(--color-accent) 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Shimmer para botones y badges */
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+    pointer-events: none;
+  }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes marquee-reverse {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes aurora {
+  0%   { transform: translate3d(-10%, -10%, 0) scale(1);   opacity: 0.7; }
+  50%  { transform: translate3d(8%, 6%, 0)    scale(1.15); opacity: 0.95; }
+  100% { transform: translate3d(-6%, 8%, 0)   scale(1.05); opacity: 0.8; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-accent-glow); }
+  50%      { box-shadow: 0 0 0 10px transparent; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
