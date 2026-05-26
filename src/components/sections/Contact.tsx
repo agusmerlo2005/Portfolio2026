@@ -4,8 +4,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Send, Loader2, Check, AlertCircle, Mail, MapPin } from "lucide-react";
+import { Send, Check, Mail, MapPin } from "lucide-react";
 import { WhatsappIcon, LinkedinIcon, GithubIcon } from "@/components/ui/Icons";
+
+const EMAIL = "agusmerlo2005@icloud.com";
+const WHATSAPP = "5493471681690";
 
 const schema = z.object({
   name: z.string().min(2, "Demasiado corto").max(80, "Demasiado largo"),
@@ -19,14 +22,32 @@ type FormValues = z.infer<typeof schema>;
 
 const budgets = ["< USD 500", "USD 500 - 1500", "USD 1500 - 4000", "USD 4000+", "A discutir"];
 
+const buildBody = (data: FormValues) => {
+  return [
+    `Hola Agustín,`,
+    ``,
+    `Soy ${data.name}.`,
+    `Email: ${data.email}`,
+    data.budget ? `Presupuesto: ${data.budget}` : null,
+    ``,
+    `Mensaje:`,
+    data.message,
+    ``,
+    `— Enviado desde agustinmerlo.dev`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+};
+
 export const Contact = () => {
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [sent, setSent] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -35,22 +56,32 @@ export const Contact = () => {
 
   const selectedBudget = watch("budget");
 
-  const onSubmit = async (data: FormValues) => {
-    setStatus("loading");
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error();
-      setStatus("success");
-      reset();
-      setTimeout(() => setStatus("idle"), 4000);
-    } catch {
-      setStatus("error");
-      setTimeout(() => setStatus("idle"), 4000);
+  const onSubmitMail = (data: FormValues) => {
+    if (data.honeypot) return;
+    const subject = `Nuevo contacto desde el portfolio · ${data.name}`;
+    const body = buildBody(data);
+    const url = `mailto:${EMAIL}?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+    window.location.href = url;
+    setSent(true);
+    reset();
+    setTimeout(() => setSent(false), 5000);
+  };
+
+  const onWhatsapp = () => {
+    const data = getValues();
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      handleSubmit(() => {})();
+      return;
     }
+    const text = buildBody(result.data);
+    const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    setSent(true);
+    reset();
+    setTimeout(() => setSent(false), 5000);
   };
 
   return (
@@ -91,8 +122,8 @@ export const Contact = () => {
               <span className="text-accent-gradient italic font-light">La construimos.</span>
             </h2>
             <p className="text-zinc-400 text-base sm:text-lg leading-relaxed mb-10 max-w-md">
-              Contame en qué estás pensando. Respondo personalmente todos los mensajes
-              en menos de 24hs hábiles.
+              Llená el formulario y elegí cómo querés mandarme el mensaje — abre tu
+              cliente de mail o WhatsApp con todo pre-cargado. Respondo en menos de 24hs hábiles.
             </p>
 
             <ul className="flex flex-col gap-4 mb-10">
@@ -101,10 +132,10 @@ export const Contact = () => {
                   <Mail size={16} />
                 </span>
                 <a
-                  href="mailto:agusmerlo2005@icloud.com"
+                  href={`mailto:${EMAIL}`}
                   className="text-sm font-medium hover:text-white transition-colors"
                 >
-                  agusmerlo2005@icloud.com
+                  {EMAIL}
                 </a>
               </li>
               <li className="flex items-center gap-3 text-zinc-300">
@@ -117,7 +148,7 @@ export const Contact = () => {
 
             <div className="flex items-center gap-3">
               <a
-                href="https://wa.me/5493471681690"
+                href={`https://wa.me/${WHATSAPP}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center h-11 w-11 rounded-full border border-white/10 text-zinc-300 hover:border-emerald-400/40 hover:text-emerald-400 hover:bg-emerald-400/5 transition-all"
@@ -154,7 +185,7 @@ export const Contact = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onSubmitMail)}
             className="flex flex-col gap-4"
             noValidate
           >
@@ -216,37 +247,39 @@ export const Contact = () => {
               />
             </Field>
 
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="group relative mt-2 inline-flex items-center justify-center gap-3 px-7 py-4 rounded-2xl bg-white text-black text-sm font-bold uppercase tracking-[0.18em] hover:bg-[var(--color-accent-hi)] disabled:opacity-60 disabled:cursor-not-allowed transition-all overflow-hidden"
-              data-cursor-hover
-            >
-              {status === "loading" ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Enviando…
-                </>
-              ) : status === "success" ? (
-                <>
-                  <Check size={16} strokeWidth={2.5} />
-                  ¡Mensaje enviado!
-                </>
-              ) : status === "error" ? (
-                <>
-                  <AlertCircle size={16} strokeWidth={2.5} />
-                  Hubo un error
-                </>
-              ) : (
-                <>
-                  Enviar mensaje
-                  <Send size={15} strokeWidth={2.5} />
-                </>
-              )}
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              <button
+                type="submit"
+                className="group relative inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-white text-black text-xs sm:text-sm font-bold uppercase tracking-[0.18em] hover:bg-[var(--color-accent-hi)] transition-all"
+                data-cursor-hover
+              >
+                {sent ? (
+                  <>
+                    <Check size={16} strokeWidth={2.5} />
+                    ¡Listo!
+                  </>
+                ) : (
+                  <>
+                    <Mail size={15} strokeWidth={2.5} />
+                    Enviar por email
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={onWhatsapp}
+                className="group relative inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs sm:text-sm font-bold uppercase tracking-[0.18em] hover:bg-emerald-500/20 hover:border-emerald-500/50 transition-all"
+                data-cursor-hover
+              >
+                <WhatsappIcon size={15} />
+                WhatsApp
+              </button>
+            </div>
 
-            <p className="text-[11px] text-zinc-500 text-center mt-1">
-              Tus datos son privados y sólo se usan para responderte.
+            <p className="text-[11px] text-zinc-500 text-center mt-2 leading-relaxed">
+              Al enviar, se abre tu cliente de mail o WhatsApp con el mensaje pre-cargado.
+              <br />
+              Tus datos quedan sólo entre vos y yo.
             </p>
           </motion.form>
         </div>
